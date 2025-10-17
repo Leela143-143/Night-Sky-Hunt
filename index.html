@@ -12,6 +12,7 @@
             --button-hover: #7abeff;
             --text-color: #E6F1FF;
             --star-color: #FFFFFF;
+            --gold: #FFD700; /* Added for consistency */
         }
 
         body {
@@ -29,22 +30,26 @@
             align-items: center;
         }
 
-        /* --- Twinkling Stars Background (Subtle) --- */
+        /* --- Twinkling Stars Background (ENHANCED) --- */
         .stars {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background: transparent;
             box-shadow: 
                 -100vw -50vh var(--star-color), 100vw 100vh var(--star-color), 20vw 80vh var(--star-color), -80vw -20vh var(--star-color),
                 40vw 10vh var(--star-color), 10vw 90vh var(--star-color), -50vw -10vh var(--star-color), 90vw -40vh var(--star-color);
-            opacity: 0.6; /* Make them dimmer */
+            /* ACTIVATED ANIMATION */
+            animation: twinkle 15s linear infinite alternate;
         }
-        @keyframes twinkle { 0% { opacity: 0.1; } 100% { opacity: 0.6; } }
+        @keyframes twinkle { 
+            0% { opacity: 0.1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.2; }
+        }
 
         /* --- TITLE STYLING (Gradient Text) --- */
         #mainTitle {
             font-size: 5em;
             font-weight: 800;
             margin-bottom: 70px; /* Space above buttons */
-            /* Apply Gradient */
             background-image: linear-gradient(to right, #FF8C00, #FF007F, #9932CC); 
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -57,16 +62,14 @@
             max-width: 90%; /* Use more screen space */
             width: 420px;
             padding: 30px 0;
-            /* Remove the frosted glass effect for the landing page */
             background: transparent;
             box-shadow: none;
         }
         
-        /* Container for the button row on the landing screen */
         #landingView .button-row {
             display: flex;
             justify-content: center;
-            gap: 20px; /* Space between buttons */
+            gap: 20px;
             width: 100%;
             margin-top: 50px;
         }
@@ -82,20 +85,20 @@
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            width: auto; /* Buttons adjust naturally */
+            width: auto;
         }
 
-        .landing-button {
-            background-color: var(--button-blue);
-        }
+        .landing-button { background-color: var(--button-blue); }
         .landing-button:hover {
             background-color: var(--button-hover);
             transform: translateY(-1px);
         }
+        
+        .logout-btn { margin-top: 20px; }
 
-        /* --- HUNT VIEW STYLING (The input form) --- */
+        /* --- HUNT & LOGIN VIEW STYLING --- */
         #huntView, #loginView {
-            background: rgba(42, 68, 148, 0.15); /* Reintroduce translucent background for the forms */
+            background: rgba(42, 68, 148, 0.15);
             backdrop-filter: blur(5px);
             padding: 30px;
             border-radius: 12px;
@@ -103,7 +106,6 @@
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
         }
         
-        /* Ensure inputs look good on hunt view */
         #huntView input[type="number"], #loginView select {
              width: 90%; 
              padding: 14px; margin: 15px 0; border-radius: 8px; 
@@ -112,13 +114,14 @@
              font-weight: bold; text-align: center;
         }
         
-        /* Styling adjustments for the dropdown form */
         .team-prompt { font-size: 1.1em; font-weight: bold; color: var(--gold); margin-bottom: 10px; padding: 8px 0; border-bottom: 2px solid rgba(255, 199, 0, 0.3); display: block; }
         #teamIdSelect { background-color: rgba(255, 255, 255, 0.1); color: #E6F1FF; height: 120px; border: 1px solid var(--button-blue); padding: 5px; text-align: left; }
-        #huntView button { background-color: #3f90ff; }
+        #huntView button, #loginView button { background-color: #3f90ff; width: 100%; margin: 5px 0; }
+        
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; font-size: 1.1em; }
         .success { background-color: #03a062; }
         .error { background-color: #8f0d0d; }
-        .coordinate-output { font-size: 1.8em; color: var(--gold); }
+        .coordinate-output { font-size: 1.8em; color: var(--gold); font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body onload="initializeData(); checkLoginStatus()">
@@ -129,56 +132,43 @@
 <div class="container">
     <h1 id="mainTitle">Night Sky Hunt</h1>
     
-    <!-- 1. LANDING VIEW (Matches the image prompt) -->
+    <!-- 1. LANDING VIEW -->
     <div id="landingView" style="display: none;">
         <div class="button-row">
-            <!-- Only showing the Team Login button as requested -->
             <button class="landing-button" onclick="showTeamLoginScreen()">Team Login</button>
         </div>
     </div>
 
-    <!-- 2. LOGIN VIEW (Where the team selects their ID) -->
+    <!-- 2. LOGIN VIEW -->
     <div id="loginView" style="display: none;">
         <p>A coordinate awaits. Select your team to begin.</p>
-        
         <div class="select-group">
             <span class="team-prompt">SELECT TEAM (1-20)</span> 
-            
-            <select id="teamIdSelect" size="6">
-                <!-- Options populated by JavaScript -->
-            </select>
+            <select id="teamIdSelect" size="6"></select>
         </div>
-        
         <button onclick="loginTeam()">ENGAGE TRACKER</button>
-        <button class="logout-btn" onclick="showLandingScreen()" style="background-color: #333; width: 90%;">Back</button>
+        <button class="logout-btn" onclick="showLandingScreen()" style="background-color: #333;">Back</button>
     </div>
 
-    <!-- 3. HUNT VIEW (Where the team submits codes) -->
+    <!-- 3. HUNT VIEW -->
     <div id="huntView" style="display: none;">
         <h2 id="teamGreeting"></h2>
-        
         <label for="codeInput">Enter 4-Digit Validation Code:</label>
-        <input type="number" id="codeInput" maxlength="4" placeholder="••••" required>
-
+        <input type="number" id="codeInput" placeholder="••••" required>
         <button onclick="handleSubmission()">VALIDATE & RECALCULATE</button>
-
-        <div id="result">
-            Awaiting signal...
-        </div>
-        
-        <button class="logout-btn" onclick="logoutTeam()">Logout / Reset Tracker</button>
+        <div id="result">Awaiting signal...</div>
+        <button class="logout-btn" onclick="logoutTeam()" style="background-color: #555;">Logout / Reset Tracker</button>
     </div>
 </div>
 
 <script>
     // =================================================================
-    // CONFIGURATION SECTION (UNCHANGED DATA STRUCTURES)
+    // CONFIGURATION SECTION
     // =================================================================
     
     const NUM_TEAMS = 20;
     const NUM_QUESTIONS = 20;
     
-    // --- 1. QUESTION CODES AND NEXT COORDINATES (DEFINE YOUR DATA HERE) ---
     const questionsData = {
         "Q1":  { code: "1001", coords: "(E-15, 30)" }, "Q2":  { code: "1002", coords: "(A-05, 12)" },
         "Q3":  { code: "1003", coords: "(M-20, 55)" }, "Q4":  { code: "1004", coords: "(Z-01, 01)" },
@@ -193,17 +183,16 @@
         "Q_WIN": { code: "9999", coords: "🎉 HEAD TO THE FINISH LINE (Gymnasium) 🎉" }
     };
 
-    // --- 2. TEAM SEQUENCES (DEFINE YOUR 20 UNIQUE PATHS HERE) ---
     const sequences = {
-        "1":  ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19", "Q20"],
-        "2":  ["Q2", "Q4", "Q1", "Q3", "Q6", "Q5", "Q8", "Q7", "Q10", "Q9", "Q12", "Q11", "Q14", "Q13", "Q16", "Q15", "Q18", "Q17", "Q20", "Q19"],
-        "3":  ["Q20", "Q19", "Q18", "Q17", "Q16", "Q15", "Q14", "Q13", "Q12", "Q11", "Q10", "Q9", "Q8", "Q7", "Q6", "Q5", "Q4", "Q3", "Q2", "Q1"],
-        "4":  ["Q3", "Q6", "Q9", "Q12", "Q15", "Q18", "Q1", "Q4", "Q7", "Q10", "Q13", "Q16", "Q19", "Q2", "Q5", "Q8", "Q11", "Q14", "Q17", "Q20"],
-        "5":  ["Q5", "Q10", "Q15", "Q20", "Q1", "Q6", "Q11", "Q16", "Q2", "Q7", "Q12", "Q17", "Q3", "Q8", "Q13", "Q18", "Q4", "Q9", "Q14", "Q19"],
-        "6":  ["Q6", "Q7", "Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q16", "Q17", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15"],
-        "7":  ["Q7", "Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q17", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16"],
-        "8":  ["Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"],
-        "9":  ["Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18"],
+        "1": ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19", "Q20"],
+        "2": ["Q2", "Q4", "Q1", "Q3", "Q6", "Q5", "Q8", "Q7", "Q10", "Q9", "Q12", "Q11", "Q14", "Q13", "Q16", "Q15", "Q18", "Q17", "Q20", "Q19"],
+        "3": ["Q20", "Q19", "Q18", "Q17", "Q16", "Q15", "Q14", "Q13", "Q12", "Q11", "Q10", "Q9", "Q8", "Q7", "Q6", "Q5", "Q4", "Q3", "Q2", "Q1"],
+        "4": ["Q3", "Q6", "Q9", "Q12", "Q15", "Q18", "Q1", "Q4", "Q7", "Q10", "Q13", "Q16", "Q19", "Q2", "Q5", "Q8", "Q11", "Q14", "Q17", "Q20"],
+        "5": ["Q5", "Q10", "Q15", "Q20", "Q1", "Q6", "Q11", "Q16", "Q2", "Q7", "Q12", "Q17", "Q3", "Q8", "Q13", "Q18", "Q4", "Q9", "Q14", "Q19"],
+        "6": ["Q6", "Q7", "Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q16", "Q17", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15"],
+        "7": ["Q7", "Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q17", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16"],
+        "8": ["Q8", "Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q18", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"],
+        "9": ["Q9", "Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q19", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18"],
         "10": ["Q10", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q20", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19"],
         "11": ["Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19", "Q20", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10"],
         "12": ["Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19", "Q20", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11"],
@@ -217,16 +206,26 @@
         "20": ["Q20", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18", "Q19"],
     };
 
-    // --- 3. TEAM PROGRESS (Initial State) ---
-    let teamProgress = {
-        "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, 
-        "11": 0, "12": 0, "13": 0, "14": 0, "15": 0, "16": 0, "17": 0, "18": 0, "19": 0, "20": 0, 
-    };
+    // --- 3. TEAM PROGRESS (Persistent) ---
+    let teamProgress; // Will be loaded in initializeData
 
-    // --- VIEW SWITCHING FUNCTIONS ---
+    // =================================================================
+    // APPLICATION LOGIC
+    // =================================================================
     
     function initializeData() {
+        // ENHANCEMENT: Load progress from localStorage or set to default
+        const savedProgress = localStorage.getItem('nightSkyHuntProgress');
+        if (savedProgress) {
+            teamProgress = JSON.parse(savedProgress);
+        } else {
+            teamProgress = {};
+            for (let i = 1; i <= NUM_TEAMS; i++) teamProgress[i] = 0;
+        }
+
         const teamSelect = document.getElementById('teamIdSelect');
+        // Clear previous options before populating, to prevent duplicates
+        teamSelect.innerHTML = '';
         for (let t = 1; t <= NUM_TEAMS; t++) {
             const option = document.createElement('option');
             option.value = t;
@@ -234,6 +233,15 @@
             teamSelect.appendChild(option);
         }
     }
+
+    // ENHANCEMENT: Add event listener for better input handling
+    document.getElementById('codeInput').addEventListener('keyup', function(event) {
+        if (this.value.length > 4) this.value = this.value.slice(0, 4);
+        if (event.key === "Enter") {
+            event.preventDefault();
+            handleSubmission();
+        }
+    });
 
     function checkLoginStatus() {
         const teamId = localStorage.getItem('currentTeamId');
@@ -253,7 +261,9 @@
     function showLandingScreen() {
         hideAllViews();
         document.getElementById('landingView').style.display = 'block';
-        document.getElementById('result').innerHTML = "Awaiting signal...";
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = "Awaiting signal...";
+        resultDiv.className = ''; // Reset class
     }
     
     function showTeamLoginScreen() {
@@ -265,7 +275,6 @@
         const teamId = document.getElementById('teamIdSelect').value;
         if (teamId && sequences[teamId]) {
             localStorage.setItem('currentTeamId', teamId);
-            updateGreeting(teamId); 
             showHuntView(teamId);
         } else {
             alert("Please select a valid team from the list.");
@@ -279,7 +288,8 @@
 
     function updateGreeting(teamId) {
         const currentStep = teamProgress[teamId] + 1;
-        document.getElementById('teamGreeting').textContent = `Team ${teamId} | Step ${currentStep} / ${NUM_QUESTIONS}`;
+        const totalSteps = sequences[teamId].length;
+        document.getElementById('teamGreeting').textContent = `Team ${teamId} | Step ${currentStep} / ${totalSteps}`;
     }
 
     function showHuntView(teamId) {
@@ -287,8 +297,6 @@
         document.getElementById('huntView').style.display = 'block';
         updateGreeting(teamId);
     }
-
-    // --- CORE VALIDATION LOGIC ---
 
     function handleSubmission() {
         const teamId = localStorage.getItem('currentTeamId');
@@ -304,9 +312,12 @@
         const teamStepIndex = teamProgress[teamId];
         const teamSequence = sequences[teamId];
         
-        if (teamStepIndex >= NUM_QUESTIONS) {
+        if (teamStepIndex >= teamSequence.length) {
             resultDiv.className = 'success';
-            resultDiv.innerHTML = "MISSION COMPLETE. Proceed to finish line.";
+            resultDiv.innerHTML = `
+                <p>MISSION COMPLETE!</p>
+                <p class="coordinate-output">${questionsData['Q_WIN'].coords}</p>
+            `;
             return;
         }
 
@@ -317,10 +328,13 @@
             // SUCCESS
             teamProgress[teamId]++;
             
+            // ENHANCEMENT: Save progress to localStorage
+            localStorage.setItem('nightSkyHuntProgress', JSON.stringify(teamProgress));
+            
             const nextStepIndex = teamProgress[teamId];
             updateGreeting(teamId);
 
-            if (nextStepIndex >= NUM_QUESTIONS) {
+            if (nextStepIndex >= teamSequence.length) {
                 resultDiv.className = 'success';
                 resultDiv.innerHTML = `
                     <p>CODE ACCEPTED: MISSION COMPLETE!</p>
@@ -336,7 +350,6 @@
                     <p class="coordinate-output">${nextCoords}</p>
                 `;
             }
-
         } else {
             // FAILURE
             resultDiv.className = 'error';
@@ -347,8 +360,8 @@
         }
 
         document.getElementById('codeInput').value = '';
+        document.getElementById('codeInput').focus(); // Keep the input field active
     }
-
 </script>
 
 </body>
